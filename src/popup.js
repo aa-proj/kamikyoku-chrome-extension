@@ -71,7 +71,7 @@ import './popup.css';
       },
     },
     response => {
-      console.log(response.message + "...");
+      // console.log(response.message + "...");
     }
   );
 })();

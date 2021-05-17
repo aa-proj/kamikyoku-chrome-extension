@@ -44,14 +44,14 @@ chrome.runtime.sendMessage(
     },
   },
   response => {
-    console.log(response.message);
+    // console.log(response.message);
   }
 );
 
 // Listen for message
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   if (request.type === 'COUNT') {
-    console.log(`Current count is ${request.payload.count}`);
+    // console.log(`Current count is ${request.payload.count}`);
   }
 
   // Send an empty response
