@@ -2,7 +2,7 @@
 
 import './popup.css';
 
-(function() {
+(function () {
   // We will make use of Storage API to get and store `count` value
   // More information on Storage API can we found at
   // https://developer.chrome.com/extensions/storage
@@ -10,16 +10,19 @@ import './popup.css';
   // To get storage access, we have to mention it in `permissions` property of manifest.json file
   // More information on Permissions can we found at
   // https://developer.chrome.com/extensions/declare_permissions
-  const counterStorage = {
+  const KamiKyokuStorage = {
     get: cb => {
-      chrome.storage.sync.get(['count'], result => {
-        cb(result.count);
+      chrome.storage.sync.get(['data'], result => {
+        cb(result.data);
       });
     },
     set: (value, cb) => {
       chrome.storage.sync.set(
         {
-          count: value,
+          data: {
+            webHookAddress: value.webHookAddress,
+            userName: value.userName
+          },
         },
         () => {
           cb();
@@ -28,74 +31,36 @@ import './popup.css';
     },
   };
 
-  function setupCounter(initialValue = 0) {
-    document.getElementById('counter').innerHTML = initialValue;
-
-    document.getElementById('incrementBtn').addEventListener('click', () => {
-      updateCounter({
-        type: 'INCREMENT',
-      });
-    });
-
-    document.getElementById('decrementBtn').addEventListener('click', () => {
-      updateCounter({
-        type: 'DECREMENT',
-      });
+  function setupCounter() {
+    KamiKyokuStorage.get((data) => {
+      console.log(data)
+      document.getElementById("WebHookAddress").value = data.webHookAddress;
+      document.getElementById("UserName").value = data.userName;
+    })
+    document.getElementById('saveBtn').addEventListener('click', () => {
+      console.log("save")
+      update();
     });
   }
 
-  function updateCounter({ type }) {
-    counterStorage.get(count => {
-      let newCount;
-
-      if (type === 'INCREMENT') {
-        newCount = count + 1;
-      } else if (type === 'DECREMENT') {
-        newCount = count - 1;
-      } else {
-        newCount = count;
-      }
-
-      counterStorage.set(newCount, () => {
-        document.getElementById('counter').innerHTML = newCount;
-
-        // Communicate with content script of
-        // active tab by sending a message
-        chrome.tabs.query({ active: true, currentWindow: true }, tabs => {
-          const tab = tabs[0];
-
-          chrome.tabs.sendMessage(
-            tab.id,
-            {
-              type: 'COUNT',
-              payload: {
-                count: newCount,
-              },
-            },
-            response => {
-              console.log('Current count value passed to contentScript file');
-            }
-          );
-        });
-      });
-    });
+  function update() {
+    let webHookAddress = document.getElementById("WebHookAddress").value;
+    let userName = document.getElementById("UserName").value;
+    KamiKyokuStorage.set({ webHookAddress, userName }, () => { });
   }
 
-  function restoreCounter() {
+  function restore() {
     // Restore count value
-    counterStorage.get(count => {
-      if (typeof count === 'undefined') {
+    KamiKyokuStorage.get(data => {
+      if (typeof data === 'undefined') {
         // Set counter value as 0
-        counterStorage.set(0, () => {
-          setupCounter(0);
-        });
-      } else {
-        setupCounter(count);
+        KamiKyokuStorage.set({ webHookAddress: "", userName: "" }, () => { });
       }
+      setupCounter();
     });
   }
 
-  document.addEventListener('DOMContentLoaded', restoreCounter);
+  document.addEventListener('DOMContentLoaded', restore);
 
   // Communicate with background file by sending a message
   chrome.runtime.sendMessage(
@@ -106,7 +71,7 @@ import './popup.css';
       },
     },
     response => {
-      console.log(response.message);
+      console.log(response.message + "...");
     }
   );
 })();
